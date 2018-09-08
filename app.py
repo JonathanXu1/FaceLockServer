@@ -15,3 +15,6 @@ def theGoog():
     data = request.args.to_dict()
     intentName = data['queryResult']['intent']['name']
 
+
+if __name__ == '__main__':
+    app.run(port=8080, debug=True)
