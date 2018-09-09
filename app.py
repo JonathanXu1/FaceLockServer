@@ -120,7 +120,7 @@ def theGoog():
     elif intentName == 'Who is there':
         lastPerson = walkups.find_one(sort=[('time', DESCENDING)])
         if lastPerson:
-            return json.dumps({ 'fulfillmentText': f'{lastPerson['name']} was at your door at {lastPerson['time']}' })
+            return json.dumps({ 'fulfillmentText': f'{lastPerson["name"]} was at your door at {lastPerson["time"]}' })
         else:
             return json.dumps({ 'fulfillmentText': 'No one has ever been to your door' })
     elif intentName == 'Read Lock State':
