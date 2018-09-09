@@ -1,4 +1,6 @@
 # Import flask and other such stuff
+import json
+import datetime
 from flask import Flask, request, jsonify
 import boto3
 import io
@@ -27,6 +29,7 @@ app = Flask(__name__)
 
 @app.route('/uploadImage', methods=['POST'])
 def yeet():
+    now = datetime.datetime.now()
     data = request.files['image']
     print(type(data))
 
@@ -92,23 +95,25 @@ def yeet():
                     person = 'no match found'
 
                 print(person)
+                walkups.insert_one({ 'face': match['Face']['FaceId'], 'time': now, 'name': person })
                 return match['Face']['FaceId'], match['Face']['Confidence'], person
 
         else:
             # Upload the new face as an unknown entity
+            walkups.insert_one({ 'time': now, 'name': 'An unknown person' })
             pass
 
 
 @app.route('/googleactions', methods=['POST'])
 def theGoog():
-    data = request.args.to_dict()
+    data = request.get_json()
     intentName = data['queryResult']['intent']['displayName']
     if intentName == 'Lock the door':
         return json.dumps({ 'fulfillmentText': 'I\'ve definitely locked your door. I\'m not just saying that.' })
     elif intentName == 'Unlock the door':
         return json.dumps({ 'fulfillmentText': 'You can totally believe I just unlocked your door' })
     elif intentName == 'Who is there':
-        lastPerson = walkins.findOne(sort=[('time', DESCENDING)])
+        lastPerson = walkups.find_one(sort=[('time', DESCENDING)])
         if lastPerson:
             return json.dumps({ 'fulfillmentText': f'{lastPerson.name} was at your door at {lastPerson.time}' })
         else:
