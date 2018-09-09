@@ -98,7 +98,27 @@ def yeet():
 @app.route('/googleactions', methods=['POST'])
 def theGoog():
     data = request.args.to_dict()
-    intentName = data['queryResult']['intent']['name']
+    intentName = data['queryResult']['intent']['displayName']
+    if intentName == 'Lock the door':
+        return json.dumps({ 'fulfillmentText': 'I\'ve definitely locked your door. I\'m not just saying that.' })
+    elif intentName == 'Unlock the door':
+        return json.dumps({ 'fulfillmentText': 'You can totally believe I just unlocked your door' })
+    elif intentName == 'Who is there':
+        return json.dumps({ 'fulfillmentText': 'I\'ve definitely locked your door. I\'m not just saying that.' })
+    elif intentName == 'Read Lock State':
+        return json.dumps({ 'fulfillmentText': 'Your door is locked.' })
+    elif intentName == 'Take picture':
+        return json.dumps({
+            'fulfillmentMessages': [
+                {
+                    'card': {
+                        'imageUri': 'https://media2.giphy.com/media/g9582DNuQppxC/giphy.gif'
+                    }
+                }
+            ]
+        })
+    else:
+        return json.dumps({ 'fulfillmentText': 'I don\'t understand.' })
 
 
 if __name__ == '__main__':
