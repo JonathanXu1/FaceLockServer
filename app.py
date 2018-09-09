@@ -96,12 +96,13 @@ def yeet():
 
                 print(person)
                 walkups.insert_one({ 'face': match['Face']['FaceId'], 'time': now, 'name': person })
-                return match['Face']['FaceId'], match['Face']['Confidence'], person
+                return jsonify(faceID=match['Face']['FaceId'], confidence=match['Face']['Confidence'], faceName=person)
 
         else:
             # Upload the new face as an unknown entity
+            print("Unknown person")
             walkups.insert_one({ 'time': now, 'name': 'An unknown person' })
-            pass
+            return jsonify(faceID='unknown', confidence=0, faceName='unknown')
 
 
 @app.route('/googleactions', methods=['POST'])
