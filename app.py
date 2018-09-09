@@ -1,5 +1,6 @@
 # Import flask and other such stuff
 import json
+import time
 import datetime
 from flask import Flask, request, jsonify
 import boto3
@@ -10,6 +11,7 @@ import numpy
 from keys import AMAZON_KEYS_REC
 from pprint import pprint
 from pymongo import MongoClient, DESCENDING
+from flask_socketio import SocketIO, send
 
 #Output text
 output = ""
@@ -26,6 +28,7 @@ walkups = client.adoorable.walkups
 import requests
 
 app = Flask(__name__)
+socketio = SocketIO(app)
 
 @app.route('/uploadImage', methods=['POST'])
 def yeet():
@@ -114,8 +117,10 @@ def theGoog():
     data = request.get_json()
     intentName = data['queryResult']['intent']['displayName']
     if intentName == 'Lock the door':
-        return json.dumps({ 'fulfillmentText': 'I\'ve definitely locked your door. I\'m not just saying that.' })
+        send({'lock':true})
+        return json.dumps({ 'fulfillmentText': 'I\'ve locked your door.' })
     elif intentName == 'Unlock the door':
+        send({'unlock':true})
         return json.dumps({ 'fulfillmentText': 'You can totally believe I just unlocked your door' })
     elif intentName == 'Who is there':
         lastPerson = walkups.find_one(sort=[('time', DESCENDING)])
@@ -124,7 +129,16 @@ def theGoog():
         else:
             return json.dumps({ 'fulfillmentText': 'No one has ever been to your door' })
     elif intentName == 'Read Lock State':
-        return json.dumps({ 'fulfillmentText': 'Your door is locked.' })
+        state = None
+        def ack(value):
+            state = value
+        send({'getState': true}, callback=ack)
+        while state == None:
+            time.sleep(10)
+        if state:
+            return json.dumps({ 'fulfillmentText': 'Your door is locked.' })
+        else:
+            return json.dumps({ 'fulfillmentText': 'Your door is unlocked.' })
     elif intentName == 'Take picture':
         return json.dumps({
             'fulfillmentMessages': [
@@ -140,4 +154,4 @@ def theGoog():
 
 
 if __name__ == '__main__':
-    app.run(port=8080, debug=True)
+    socketio.run(port=8080, debug=True)
