@@ -7,6 +7,7 @@ import cv2
 import numpy
 from keys import AMAZON_KEYS_REC
 from pprint import pprint
+from pymongo import MongoClient, DESCENDING
 
 #Output text
 output = ""
@@ -16,6 +17,9 @@ rekognition = boto3.client('rekognition', region_name='us-east-1', aws_access_ke
 dynamodb = boto3.client('dynamodb', region_name='us-east-1', aws_access_key_id=AMAZON_KEYS_REC[0], aws_secret_access_key=AMAZON_KEYS_REC[1])
 s3 = boto3.resource('s3', aws_access_key_id=AMAZON_KEYS_REC[0], aws_secret_access_key=AMAZON_KEYS_REC[1])
 
+# Set up MongoDB
+client = MongoClient('mongodb://localhost:27017')
+walkups = client.adoorable.walkups
 
 import requests
 
@@ -104,7 +108,11 @@ def theGoog():
     elif intentName == 'Unlock the door':
         return json.dumps({ 'fulfillmentText': 'You can totally believe I just unlocked your door' })
     elif intentName == 'Who is there':
-        return json.dumps({ 'fulfillmentText': 'I\'ve definitely locked your door. I\'m not just saying that.' })
+        lastPerson = walkins.findOne(sort=[('time', DESCENDING)])
+        if lastPerson:
+            return json.dumps({ 'fulfillmentText': f'{lastPerson.name} was at your door at {lastPerson.time}' })
+        else:
+            return json.dumps({ 'fulfillmentText': 'No one has ever been to your door' })
     elif intentName == 'Read Lock State':
         return json.dumps({ 'fulfillmentText': 'Your door is locked.' })
     elif intentName == 'Take picture':
