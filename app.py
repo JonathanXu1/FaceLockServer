@@ -37,10 +37,6 @@ def yeet():
     image.save(stream, format="JPEG")
     image_binary = stream.getvalue()
 
-    f = open("test.jpg", "wb")
-    f.write(image_binary)
-    f.close()
-
     response = rekognition.detect_faces(
         Image={'Bytes': image_binary}
     )
@@ -88,7 +84,7 @@ def yeet():
                     TableName='PennappsXVIII',
                     Key={'RekognitionID': {'S': match['Face']['FaceId']}}
                 )
-    
+
                 if 'Item' in face:
                     person = face['Item']['FullName']['S']
                 else:
