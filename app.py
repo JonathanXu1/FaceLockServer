@@ -26,14 +26,20 @@ app = Flask(__name__)
 
 @app.route('/uploadImage', methods=['POST'])
 def yeet():
-    data = request.files['file']
-    print(data)
+    data = request.files['image']
+    print(type(data))
+
+
 
     # Aws facial recognition
-    image = data
+    image = Image.open(data)
     stream = io.BytesIO()
     image.save(stream, format="JPEG")
     image_binary = stream.getvalue()
+
+    f = open("test.jpg", "wb")
+    f.write(image_binary)
+    f.close()
 
     response = rekognition.detect_faces(
         Image={'Bytes': image_binary}
@@ -45,6 +51,7 @@ def yeet():
     boxes = []
 
     # Get image diameters
+
     image_width = image.size[0]
     image_height = image.size[1]
 
@@ -71,7 +78,7 @@ def yeet():
             CollectionId='family_collection',
             Image={'Bytes': image_crop_binary}
         )
-        # print(response)
+        print(response)
         if len(response['FaceMatches']) > 0:
             # Return results
             print('Coordinates ', box)
@@ -81,13 +88,18 @@ def yeet():
                     TableName='PennappsXVIII',
                     Key={'RekognitionID': {'S': match['Face']['FaceId']}}
                 )
-
+    
                 if 'Item' in face:
                     person = face['Item']['FullName']['S']
                 else:
                     person = 'no match found'
 
+                print(person)
                 return match['Face']['FaceId'], match['Face']['Confidence'], person
+
+        else:
+            # Upload the new face as an unknown entity
+            pass
 
 
 @app.route('/googleactions', methods=['POST'])
