@@ -6,12 +6,13 @@ from flask import Flask, request, jsonify
 import boto3
 import io
 from PIL import Image
-import cv2
 import numpy
 from keys import AMAZON_KEYS_REC
+from keys import TWILIO_KEYS
 from pprint import pprint
 from pymongo import MongoClient, DESCENDING
 from flask_socketio import SocketIO, send
+from twilio.rest import Client
 
 #Output text
 output = ""
@@ -25,18 +26,27 @@ s3 = boto3.resource('s3', aws_access_key_id=AMAZON_KEYS_REC[0], aws_secret_acces
 client = MongoClient('mongodb://localhost:27017')
 walkups = client.adoorable.walkups
 
-import requests
-
+# Set up flask
 app = Flask(__name__)
 socketio = SocketIO(app)
+
+# Set up Twilio
+account_sid = TWILIO_KEYS[0]
+auth_token = TWILIO_KEYS[1]
+client = Client(account_sid, auth_token)
+
+def poopityscoop(words):
+    client.messages.create(
+        body=words,
+        from_='+16474905328',
+        to='+16476384839'
+    )
 
 @app.route('/uploadImage', methods=['POST'])
 def yeet():
     now = datetime.datetime.now()
     data = request.files['image']
     print(type(data))
-
-
 
     # Aws facial recognition
     image = Image.open(data)
@@ -74,8 +84,6 @@ def yeet():
 
             pil_image = image_crop.convert('RGB')
             cropped = numpy.array(pil_image)
-            # Convert RGB to BGR
-            cropped = cv2.cvtColor(cropped, cv2.COLOR_RGB2BGR)
 
             # Submit individually cropped image to Amazon Rekognition
             response = rekognition.search_faces_by_image(
@@ -100,12 +108,17 @@ def yeet():
 
                     print(person)
                     walkups.insert_one({ 'face': match['Face']['FaceId'], 'time': now, 'name': person })
+                    if person == "no match found":
+                        poopityscoop("An unknown stranger has appeared at your house")
+                    else:
+                        poopityscoop(person + " is at ur front door yo")
                     return jsonify(faceID=match['Face']['FaceId'], confidence=match['Face']['Confidence'], faceName=person)
 
             else:
                 # Upload the new face as an unknown entity
                 print("Unknown person")
-                walkups.insert_one({ 'time': now, 'name': 'An unknown person' })
+                walkups.insert_one({ 'time': now, 'name': 'An unknown person'})
+                poopityscoop("An unknown stranger has appeared at your house")
                 return jsonify(faceID='unknown', confidence=0, faceName='unknown')
     except Exception as e:
         print(e)
@@ -118,7 +131,7 @@ def theGoog():
     intentName = data['queryResult']['intent']['displayName']
     if intentName == 'Lock the door':
         send({'lock':true})
-        return json.dumps({ 'fulfillmentText': 'I\'ve locked your door.' })
+        return json.dumps({'fulfillmentText': 'I\'ve locked your door.' })
     elif intentName == 'Unlock the door':
         send({'unlock':true})
         return json.dumps({ 'fulfillmentText': 'You can totally believe I just unlocked your door' })
