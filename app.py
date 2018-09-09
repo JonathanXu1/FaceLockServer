@@ -55,54 +55,58 @@ def yeet():
     image_width = image.size[0]
     image_height = image.size[1]
 
-    # Crop face from image
-    for face in all_faces:
-        box = face['BoundingBox']
-        x1 = int(box['Left'] * image_width) * 0.9
-        y1 = int(box['Top'] * image_height) * 0.9
-        x2 = int(box['Left'] * image_width + box['Width'] * image_width) * 1.10
-        y2 = int(box['Top'] * image_height + box['Height'] * image_height) * 1.10
-        image_crop = image.crop((x1, y1, x2, y2))
+    try: #This try/catch is important for debug
+        # Crop face from image
+        for face in all_faces:
+            box = face['BoundingBox']
+            x1 = int(box['Left'] * image_width) * 0.9
+            y1 = int(box['Top'] * image_height) * 0.9
+            x2 = int(box['Left'] * image_width + box['Width'] * image_width) * 1.10
+            y2 = int(box['Top'] * image_height + box['Height'] * image_height) * 1.10
+            image_crop = image.crop((x1, y1, x2, y2))
 
-        stream = io.BytesIO()
-        image_crop.save(stream, format="JPEG")
-        image_crop_binary = stream.getvalue()
+            stream = io.BytesIO()
+            image_crop.save(stream, format="JPEG")
+            image_crop_binary = stream.getvalue()
 
-        pil_image = image_crop.convert('RGB')
-        cropped = numpy.array(pil_image)
-        # Convert RGB to BGR
-        cropped = cv2.cvtColor(cropped, cv2.COLOR_RGB2BGR)
+            pil_image = image_crop.convert('RGB')
+            cropped = numpy.array(pil_image)
+            # Convert RGB to BGR
+            cropped = cv2.cvtColor(cropped, cv2.COLOR_RGB2BGR)
 
-        # Submit individually cropped image to Amazon Rekognition
-        response = rekognition.search_faces_by_image(
-            CollectionId='family_collection',
-            Image={'Bytes': image_crop_binary}
-        )
-        print(response)
-        if len(response['FaceMatches']) > 0:
-            # Return results
-            print('Coordinates ', box)
-            for match in response['FaceMatches']:
+            # Submit individually cropped image to Amazon Rekognition
+            response = rekognition.search_faces_by_image(
+                CollectionId='family_collection',
+                Image={'Bytes': image_crop_binary}
+            )
+            print(response)
+            if len(response['FaceMatches']) > 0:
+                # Return results
+                print('Coordinates ', box)
+                for match in response['FaceMatches']:
 
-                face = dynamodb.get_item(
-                    TableName='PennappsXVIII',
-                    Key={'RekognitionID': {'S': match['Face']['FaceId']}}
-                )
+                    face = dynamodb.get_item(
+                        TableName='PennappsXVIII',
+                        Key={'RekognitionID': {'S': match['Face']['FaceId']}}
+                    )
 
-                if 'Item' in face:
-                    person = face['Item']['FullName']['S']
-                else:
-                    person = 'no match found'
+                    if 'Item' in face:
+                        person = face['Item']['FullName']['S']
+                    else:
+                        person = 'no match found'
 
-                print(person)
-                walkups.insert_one({ 'face': match['Face']['FaceId'], 'time': now, 'name': person })
-                return jsonify(faceID=match['Face']['FaceId'], confidence=match['Face']['Confidence'], faceName=person)
+                    print(person)
+                    walkups.insert_one({ 'face': match['Face']['FaceId'], 'time': now, 'name': person })
+                    return jsonify(faceID=match['Face']['FaceId'], confidence=match['Face']['Confidence'], faceName=person)
 
-        else:
-            # Upload the new face as an unknown entity
-            print("Unknown person")
-            walkups.insert_one({ 'time': now, 'name': 'An unknown person' })
-            return jsonify(faceID='unknown', confidence=0, faceName='unknown')
+            else:
+                # Upload the new face as an unknown entity
+                print("Unknown person")
+                walkups.insert_one({ 'time': now, 'name': 'An unknown person' })
+                return jsonify(faceID='unknown', confidence=0, faceName='unknown')
+    except Exception as e:
+        print(e)
+        return jsonify(faceID='unknown', confidence=0, faceName='unknown')
 
 
 @app.route('/googleactions', methods=['POST'])
