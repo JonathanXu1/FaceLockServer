@@ -11,9 +11,6 @@ from pprint import pprint
 #Output text
 output = ""
 
-# Capture image
-cap = cv2.VideoCapture(0)
-
 # Setup up aws
 rekognition = boto3.client('rekognition', region_name='us-east-1', aws_access_key_id=AMAZON_KEYS_REC[0], aws_secret_access_key=AMAZON_KEYS_REC[1])
 dynamodb = boto3.client('dynamodb', region_name='us-east-1', aws_access_key_id=AMAZON_KEYS_REC[0], aws_secret_access_key=AMAZON_KEYS_REC[1])
