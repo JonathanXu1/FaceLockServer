@@ -1,7 +1,7 @@
 import boto3
+from keys import AMAZON_KEYS_SEED
 
-
-s3 = boto3.resource('s3', aws_access_key_id='AKIAI3RFZQRXEA5HD5KA', aws_secret_access_key='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')
+s3 = boto3.resource('s3', aws_access_key_id=AMAZON_KEYS_SEED[0], aws_secret_access_key=AMAZON_KEYS_SEED[1])
 
 # Get list of objects for indexing
 images = [('image01.jpg','Jonathan'),

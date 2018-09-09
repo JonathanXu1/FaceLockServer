@@ -3,7 +3,7 @@ import io
 from PIL import Image
 import cv2
 import numpy
-from keys import AMAZON_KEY_ID, AMAZON_KEY_SECRET
+from keys import AMAZON_KEYS_REC
 from pprint import pprint
 
 #Output text
@@ -13,9 +13,9 @@ output = ""
 cap = cv2.VideoCapture(0)
 
 # Setup up aws
-rekognition = boto3.client('rekognition', region_name='us-east-1', aws_access_key_id='AKIAJLXCERPLJ4KEA6MQ', aws_secret_access_key='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')
-dynamodb = boto3.client('dynamodb', region_name='us-east-1', aws_access_key_id='AKIAJLXCERPLJ4KEA6MQ', aws_secret_access_key='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')
-s3 = boto3.resource('s3', aws_access_key_id=AMAZON_KEY_ID, aws_secret_access_key=AMAZON_KEY_SECRET)
+rekognition = boto3.client('rekognition', region_name='us-east-1', aws_access_key_id=AMAZON_KEYS_REC[0], aws_secret_access_key=AMAZON_KEYS_REC[1])
+dynamodb = boto3.client('dynamodb', region_name='us-east-1', aws_access_key_id=AMAZON_KEYS_REC[0], aws_secret_access_key=AMAZON_KEYS_REC[1])
+s3 = boto3.resource('s3', aws_access_key_id=AMAZON_KEYS_REC[0], aws_secret_access_key=AMAZON_KEYS_REC[1])
 
 
 while(True):
